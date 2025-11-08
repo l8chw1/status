@@ -215,62 +215,90 @@ if ('serviceWorker' in navigator) {
       </div>
     </div>
   </div>
-<!-- 최신 status.json 강제 로딩 -->
 <script>
-(async () => {
-  try {
-    // 캐시 우회 쿼리스트링 + no-store
-    const res = await fetch('status.json?ts=' + Date.now(), { cache: 'no-store' });
-    const S = await res.json();
+(function(){
+  const GRADE_CLASS = { E:'c2', D:'c3', C:'c4', B:'c5', A:'c6', S:'c7', SS:'c8', SSS:'c9', EX:'c10' };
+  const esc = s => String(s||'').replace(/[&<>"]/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[m]));
 
-    // 칭호 갱신
-    const titleBox = document.querySelector('[aria-label="칭호"]');
-    if (titleBox && S.titles && S.titles[0]) {
-      const t = S.titles[0];
-      const nameEl  = titleBox.querySelector('span:first-child'); // 칭호명
-      const gradeEl = titleBox.querySelector('span:nth-child(2)'); // 등급(EX)
-      if (nameEl)  nameEl.textContent  = t.name;
-      if (gradeEl) gradeEl.textContent = t.grade;
-    }
-
-    // 스탯 갱신: 좌측 라벨 텍스트로 행을 찾아 오른쪽 숫자 교체
-    const map = [
-      ['노동 효율',        'labor_efficiency'],
-      ['사업 감각',        'business_sense'],
-      ['투자 이해력',      'investment_knowledge'],
-      ['리더십/협업력',     'leadership_collab'],
-      ['자기관리/집중력',   'self_management'],
-      ['자기계발/학습력',   'self_development']
-    ];
-    const stats = S.stats || {};
-    const rows = document.querySelectorAll('.is-stats .row');
-
-    function findRow(label){
-      for (const r of rows) {
-        const left = r.querySelector('div:first-child');
-        if (left && left.textContent.trim() === label) return r;
+  fetch('status.json?ts=' + Date.now(), { cache:'no-store' })
+    .then(r => r.json())
+    .then(S => {
+      // 칭호
+      const titleBox = document.querySelector('[aria-label="칭호"]');
+      if (titleBox && S.titles && S.titles[0]) {
+        const t = S.titles[0];
+        const nameEl  = titleBox.querySelector('span:first-child');
+        const gradeEl = titleBox.querySelector('span:nth-child(2)');
+        if (nameEl)  nameEl.textContent  = t.name;
+        if (gradeEl) gradeEl.textContent = t.grade;
+        // 칭호 색상(등급 색)
+        if (nameEl && GRADE_CLASS[t.grade])  nameEl.className = GRADE_CLASS[t.grade];
+        if (gradeEl && GRADE_CLASS[t.grade]) gradeEl.className = GRADE_CLASS[t.grade];
       }
-      return null;
-    }
 
-    for (const [label, key] of map) {
-      const row = findRow(label);
-      const v = stats[key];
-      if (!row || !v) continue;
-      const right = row.querySelector('div:last-child');
-      if (!right) continue;
-      const xpClass = (v.xp === 0) ? 'zero' : 'colorize';
-      right.innerHTML = `Lv.${v.level} &nbsp;|&nbsp; <span class="${xpClass}">${v.xp}</span>|${v.xp_to_level}`;
-    }
+      // 스탯
+      const map = [
+        ['노동 효율','labor_efficiency'],
+        ['사업 감각','business_sense'],
+        ['투자 이해력','investment_knowledge'],
+        ['리더십/협업력','leadership_collab'],
+        ['자기관리/집중력','self_management'],
+        ['자기계발/학습력','self_development'],
+      ];
+      const stats = S.stats || {};
+      const rows  = document.querySelectorAll('.is-stats .row');
+      const findRow = label => {
+        for (const r of rows) {
+          const left = r.querySelector('div:first-child');
+          if (left && left.textContent.trim() === label) return r;
+        }
+        return null;
+      };
+      for (const [label, key] of map) {
+        const v = stats[key]; if (!v) continue;
+        const row = findRow(label); if (!row) continue;
+        const right = row.querySelector('div:last-child'); if (!right) continue;
+        right.innerHTML = `Lv.${v.level} &nbsp;|&nbsp; <span class="${v.xp===0?'zero':'colorize'}">${v.xp}</span>|${v.xp_to_level}`;
+      }
 
-    // 전체 레벨 진행도 요소가 있다면 갱신(선택)
-    const overallEl = document.querySelector('.overall-level');
-    if (overallEl && S.overall) {
-      overallEl.textContent = `Lv.${S.overall.level}   (진행도 🟢${S.overall.progress_pct}%)`;
-    }
-  } catch (e) {
-    console.error('status.json 로드 실패:', e);
-  }
+      // 전체 레벨
+      if (S.overall) {
+        const overallEl = document.querySelector('.overall-level');
+        if (overallEl) overallEl.textContent = `Lv.${S.overall.level}   (진행도 🟢${S.overall.progress_pct}%)`;
+      }
+
+      // 패시브 스킬(동적 렌더링)
+      // '패시브 스킬' 배지 있는 섹션을 찾아 목록을 재구성
+      const badges = document.querySelectorAll('.section .badge');
+      let skillsSection = null;
+      for (const b of badges) {
+        if (b.textContent.replace(/\s/g,'') === '패시브스킬') { skillsSection = b.parentElement; break; }
+      }
+      if (skillsSection) {
+        // 배지 아래의 기존 .skill 블록을 비우고 목록 컨테이너 생성
+        [...skillsSection.querySelectorAll('.skill')].forEach(n => n.remove());
+        const listWrap = document.createElement('div');
+        listWrap.className = 'skills';
+        const skills = S.skills || [];
+        listWrap.innerHTML = skills.map(s => {
+          const diffCls  = GRADE_CLASS[s.difficulty] || 'c2';
+          const gradeCls = GRADE_CLASS[s.grade]      || 'c2';
+          return `
+            <div class="skill">
+              <div><span class="sk-name ${diffCls}">${esc(s.name)}</span></div>
+              <div style="margin-top:6px"><span class="k">난이도 레벨</span> :
+                <span class="${diffCls}">${esc(s.difficulty)}</span>
+                <span class="k">| 등급</span> :
+                <span class="${gradeCls}">${esc(s.grade)}</span>
+              </div>
+              <div class="k desc" style="margin-top:10px">${esc(s.desc)}</div>
+              <div class="k desc" style="margin-top:8px">획득일: ${esc(s.acquired_at)} | 다음 등급 조건: ${esc(s.next_rank)}</div>
+            </div>`;
+        }).join('');
+        skillsSection.appendChild(listWrap);
+      }
+    })
+    .catch(e => console.error('status.json 로드 실패:', e));
 })();
 </script>
 
