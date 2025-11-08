@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>상태창</title>
+<style>
+:root{
+  --bg:#141113; --bg2:#191416;
+  --panelTop:#1b1618; --panelBot:#141114;
+  --text:#f6efe5; --muted:#d8ccbd; --line:#3a2f32;
+  --gold1:#fff7e6; --gold2:#f6d39b; --gold3:#e9b56e; --gold4:#bf7a38;
+  --progressColor:#6ff09a; --zero:#ededed;
+  --c2:#6B7280;  /* E */
+  --c3:#4B5563;  /* D */
+  --c4:#F97316;  /* C */
+  --c5:#FB923C;  /* B */
+  --c6:#EA580C;  /* A */
+  --c7:#FFFFFF;  /* S */
+  --c8:#FFFFFF;  /* SS (extra glow) */
+  --c9:#B8860B;  /* SSS */
+  --c10:#F2B24D; /* EX */
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background:
+    radial-gradient(1200px 600px at 0% 0%, rgba(239,196,120,.06), transparent 65%),
+    radial-gradient(1000px 600px at 100% 20%, rgba(239,196,120,.07), transparent 60%),
+    linear-gradient(180deg, var(--bg), var(--bg2));
+  color:var(--text);
+  font-family: "Apple SD Gothic Neo", "Malgun Gothic", ui-serif, "Noto Serif KR", "Noto Sans KR", system-ui, serif;
+  letter-spacing:.2px; font-size:18px; text-rendering:optimizeLegibility;
+}
+.panel, .panel *{
+  text-shadow: 0 1px 0 rgba(255,255,255,.05), 0 -1px 0 rgba(0,0,0,.35), 0 2px 3px rgba(0,0,0,.25);
+}
+.wrap{max-width:920px; margin:32px auto; padding:22px}
+.panel{
+  position:relative;
+  background:linear-gradient(180deg, var(--panelTop), var(--panelBot));
+  border-radius:24px; padding:30px 24px;
+  border:1px solid var(--line);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), 0 16px 40px rgba(0,0,0,.56), 0 0 140px rgba(229,178,102,.12);
+  overflow:visible;
+}
+.header{ text-align:center; padding:24px 12px 18px; position:relative; }
+.orn{ margin:0 auto 12px; width:300px; height:26px; position:relative; opacity:.9;
+  background:
+    radial-gradient(10px 6px at 50% 60%, var(--gold2), transparent 70%),
+    radial-gradient(8px 6px at 35% 55%, var(--gold3), transparent 70%),
+    radial-gradient(8px 6px at 65% 55%, var(--gold3), transparent 70%);
+  filter: drop-shadow(0 0 12px rgba(246,211,155,.35));
+}
+.title{ display:inline-block; position:relative; font-weight:900; font-size:32px; letter-spacing:.22em;
+  background: linear-gradient(180deg, var(--gold1), var(--gold2) 45%, var(--gold4) 95%);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  text-shadow: 0 1px 0 rgba(255,255,255,.65), 0 -1px 0 rgba(191,122,56,.25), 0 0 18px rgba(246,211,155,.35), 0 0 42px rgba(246,211,155,.18);
+  padding:2px 8px; filter: drop-shadow(0 2px 10px rgba(246,211,155,.15));
+}
+.title::after{ content:""; position:absolute; top:0; height:100%; width:38%; left:-34%;
+  background: linear-gradient(110deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.85) 50%, rgba(255,255,255,0) 100%);
+  mix-blend-mode:screen; opacity:0; transform:skewX(-20deg) translateX(0); animation: shine 5.4s infinite;}
+@keyframes shine{
+  0%{opacity:0; transform:skewX(-20deg) translateX(-120%)}
+  36%{opacity:.85; transform:skewX(-20deg) translateX(-8%)}
+  52%{opacity:.95; transform:skewX(-20deg) translateX(95%)}
+  76%{opacity:.45; transform:skewX(-20deg) translateX(140%)}
+  100%{opacity:0; transform:skewX(-20deg) translateX(170%)}
+}
+.hr{ height:1px; margin:20px 0 8px; border:0;
+  background:linear-gradient(90deg, transparent, rgba(246,211,155,.95), transparent);
+  box-shadow:0 0 16px rgba(246,211,155,.26);
+}
+.grid{display:grid; grid-template-columns:1fr 1fr; gap:16px 42px; margin-top:14px}
+.k{color:var(--muted)} .v{color:var(--text)}
+.colorize{ background: linear-gradient(180deg, #d6ffe9 0%, var(--progressColor) 60%, #1f7f3f 100%);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  text-shadow: 0 0 8px rgba(111,240,154,.45), 0 0 22px rgba(111,240,154,.25); filter: drop-shadow(0 0 10px rgba(111,240,154,.12));
+}
+.zero{ color:var(--zero); font-weight:900; position:relative;
+  text-shadow: 0 0 6px rgba(237,237,237,.45), 0 0 18px rgba(237,237,237,.25);
+}
+.zero::before{ content:""; position:absolute; inset:-6px -8px; border-radius:14px; pointer-events:none;
+  background: radial-gradient(closest-side, rgba(237,237,237,.55) 10%, transparent 70%);
+  opacity:.14; filter: blur(12px); z-index:-1;
+}
+.section{margin-top:22px; padding:22px 18px; border:1px solid var(--line); border-radius:20px;
+  background:linear-gradient(180deg,#201a1d,#161315);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), 0 0 44px rgba(246,211,155,.06);
+  font-size:14px;
+}
+.section.is-titles, .section.is-stats{ font-size:14px; }
+.row{display:grid; grid-template-columns: 1fr auto; gap:10px 22px; align-items:center; margin:18px 0}
+.skill{padding:14px 16px; border:1px dashed rgba(246,211,155,.38); border-radius:14px; background:rgba(246,211,155,.055)}
+.skill + .skill{margin-top:12px}
+.sk-name{font-weight:900} .desc{font-size:12px}
+.c2,.c3,.c4,.c5,.c6,.c7,.c8,.c9,.c10{ text-shadow: 0 0 6px currentColor, 0 0 18px rgba(255,255,255,.12); filter: drop-shadow(0 0 10px rgba(255,255,255,.06)); }
+.c8{ color:#fff; text-shadow:0 0 12px rgba(255,255,255,1), 0 0 28px rgba(255,255,255,.85), 0 0 50px rgba(255,255,255,.6); filter: drop-shadow(0 0 14px rgba(255,255,255,.35)); }
+@media (max-width:600px){ .grid{grid-template-columns:1fr} .row{grid-template-columns:1fr auto} }
+
+/* === Grade outline + halo overrides (user spec) === */
+.c10{ /* EX: orange outline, divine halo */
+  position:relative; color:#F2B24D;
+  -webkit-text-stroke:1.2px #ffd400;
+  text-shadow:
+    0 0 2px rgba(255,140,26,.9),
+    0 0 8px rgba(255,160,60,.75),
+    0 0 16px rgba(255,170,70,.55),
+    0 0 34px rgba(255,180,90,.45),
+    0 0 64px rgba(255,195,120,.35);
+}
+.c10::after{
+  content:""; position:absolute; inset:-6px -10px; border-radius:28px;
+  background: radial-gradient(circle, rgba(255,170,70,.35) 0%, rgba(255,190,110,.22) 35%, rgba(255,140,26,.10) 60%, rgba(0,0,0,0) 72%);
+  filter: blur(6px); z-index:-1;
+}
+
+.c8{ /* SS: silver outline, strong halo */
+  position:relative; color:#ffffff;
+  -webkit-text-stroke:1.2px #cfd6df;
+  text-shadow:
+    0 0 2px rgba(220,230,240,1),
+    0 0 10px rgba(220,230,240,.95),
+    0 0 20px rgba(220,230,240,.75),
+    0 0 40px rgba(220,230,240,.55);
+}
+.c8::after{
+  content:""; position:absolute; inset:-6px -8px; border-radius:28px;
+  background: radial-gradient(circle, rgba(230,236,244,.45) 0%, rgba(230,236,244,.25) 40%, rgba(255,255,255,.12) 60%, rgba(0,0,0,0) 70%);
+  filter: blur(6px); z-index:-1;
+}
+
+.c9{ /* SSS: black outline, brilliant halo */
+  position:relative; color:#B8860B;
+  -webkit-text-stroke:1.4px #000000;
+  text-shadow:
+    0 0 3px rgba(255,255,255,.6),
+    0 0 14px rgba(246,211,155,.95),
+    0 0 34px rgba(242,178,77,.9),
+    0 0 72px rgba(242,178,77,.8),
+    0 0 120px rgba(242,178,77,.7);
+}
+.c9::after{
+  content:""; position:absolute; inset:-8px -12px; border-radius:32px;
+  background: radial-gradient(circle, rgba(255,255,255,.35) 0%, rgba(246,211,155,.45) 30%, rgba(242,178,77,.35) 55%, rgba(0,0,0,0) 78%);
+  filter: blur(8px); z-index:-1;
+}
+
+</style>
+
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#141113">
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js').catch(console.error);
+  });
+}
+</script>
+
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <div class="header">
+        <div class="orn"></div>
+        <div class="title">상  태  창</div>
+        <div class="hr"></div>
+      </div>
+
+      <!-- Profile grid (no nickname) -->
+      <div class="grid">
+        <div><span class="k">이름</span> : <span class="v">이현우</span></div>
+        <div><span class="k">등급</span> : <span class="v">노비스(0차)</span></div>
+        <div><span class="k">레벨</span> : <span class="v">1</span> &nbsp;|&nbsp; <span class="k">진행도</span> : <span class="colorize">1%</span></div>
+        <div><span class="k">직업</span> : <span class="v">없음</span></div>
+      </div>
+
+      <!-- Titles section: '<칭호명> EX' inline, no label -->
+      <div class="section is-titles" style="margin-top:24px">
+        <div class="badge">&lt; 칭호 &gt;</div>
+        <div style="margin-top:12px" aria-label="칭호">
+          <span class="c10">자본주의를 해석한 자</span>
+          <span class="c10" style="margin-left:8px">EX</span>
+        </div>
+      </div>
+
+      <div class="section is-stats">
+        <div class="badge">&lt; 스탯 &gt;</div>
+        <div class="row"><div>노동 효율</div><div>Lv.0 &nbsp;|&nbsp; <span class="zero">0</span>|100</div></div>
+        <div class="row"><div>사업 감각</div><div>Lv.0 &nbsp;|&nbsp; <span class="zero">0</span>|100</div></div>
+        <div class="row"><div>투자 이해력</div><div>Lv.0 &nbsp;|&nbsp; <span class="zero">0</span>|100</div></div>
+        <div class="row"><div>리더십/협업력</div><div>Lv.0 &nbsp;|&nbsp; <span class="zero">0</span>|100</div></div>
+        <div class="row"><div>자기관리/집중력</div><div>Lv.0 &nbsp;|&nbsp; <span class="zero">0</span>|100</div></div>
+        <div class="row"><div>자기계발/학습력</div><div>Lv.0 &nbsp;|&nbsp; <span class="colorize">6</span>|100</div></div>
+      </div>
+
+      <div class="section">
+        <div class="badge">패시브 스킬</div>
+        <div class="skill">
+          <div><span class="sk-name c8">상태창 설계술</span></div>
+          <div style="margin-top:6px"><span class="k">난이도 레벨</span> : <span class="c8">SS</span> <span class="k">| 등급</span> : <span class="c2">E</span></div>
+          <div class="k desc" style="margin-top:10px">설계·표현·정렬을 통합해 게임형 상태창 UI를 신속히 구성·개선하시는 능력입니다.</div>
+          <div class="k desc" style="margin-top:8px">획득일: 2025-11-07 | 다음 등급 조건: D → 보통×2 또는 어려움×1</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

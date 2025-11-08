@@ -1,0 +1,61 @@
+{
+  "profile": {
+    "name": "이현우",
+    "class": "노비스(0차)",
+    "level": 1,
+    "progress_percent": 1,
+    "job": "없음"
+  },
+  "title": {
+    "name": "자본주의를 해석한 자",
+    "grade": "EX"
+  },
+  "stats": [
+    {
+      "label": "노동 효율",
+      "level": 0,
+      "xp": 0,
+      "cap": 100
+    },
+    {
+      "label": "사업 감각",
+      "level": 0,
+      "xp": 0,
+      "cap": 100
+    },
+    {
+      "label": "투자 이해력",
+      "level": 0,
+      "xp": 0,
+      "cap": 100
+    },
+    {
+      "label": "리더십/협업력",
+      "level": 0,
+      "xp": 0,
+      "cap": 100
+    },
+    {
+      "label": "자기관리/집중력",
+      "level": 0,
+      "xp": 0,
+      "cap": 100
+    },
+    {
+      "label": "자기계발/학습력",
+      "level": 0,
+      "xp": 6,
+      "cap": 100
+    }
+  ],
+  "skills": [
+    {
+      "name": "상태창 설계술",
+      "difficulty_grade": "SS",
+      "rank": "E",
+      "obtained_at": "2025-11-07",
+      "next_rank_rule": "D → 보통×2 또는 어려움×1",
+      "desc": "설계·표현·정렬을 통합해 게임형 상태창 UI를 신속히 구성·개선하시는 능력입니다."
+    }
+  ]
+}
