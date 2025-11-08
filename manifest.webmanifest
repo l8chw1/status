@@ -1,8 +1,7 @@
 {
   "name": "지구 온라인 상태창",
   "short_name": "상태창",
-  "id": "/status/",
-  "start_url": "/status/",
+  "start_url": "/status/index.html",
   "scope": "/status/",
   "display": "standalone",
   "background_color": "#141113",
