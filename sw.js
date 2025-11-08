@@ -1,35 +1,24 @@
+// v3 — network-first, no-cache for JSON, instant activation
+self.addEventListener('install', e => { self.skipWaiting(); });
+self.addEventListener('activate', e => { e.waitUntil(self.clients.claim()); });
 
-const CACHE = 'status-json-v1';
-const ASSETS = ['icon-192.png','icon-512.png','manifest.webmanifest','sw.js'];
+// 네트워크 우선. status.json은 항상 최신본.
+self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
 
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
-  self.skipWaiting();
-});
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => k!==CACHE && caches.delete(k)))));
-  self.clients.claim();
-});
-self.addEventListener('fetch', e => {
-  const req = e.request;
-  const url = new URL(req.url);
+  // status.json은 무조건 네트워크 + no-store
+  if (url.pathname.endsWith('/status.json')) {
+    event.respondWith(fetch(event.request, { cache: 'no-store' }));
+    return;
+  }
 
-  // Network-first for navigations and JSON
-  if (req.mode === 'navigate' || req.destination === 'document' || url.pathname.endsWith('/status.json')) {
-    e.respondWith(
-      fetch(req).then(resp => {
-        const copy = resp.clone();
-        caches.open(CACHE).then(c => c.put(req, copy));
-        return resp;
-      }).catch(() => caches.match(req))
+  // HTML도 네트워크 우선. 실패 시 캐시/기본으로.
+  if (event.request.mode === 'navigate' || url.pathname.endsWith('.html')) {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' }).catch(() => fetch(event.request))
     );
     return;
   }
-  // Cache-first for static assets
-  if (ASSETS.includes(url.pathname.split('/').pop())) {
-    e.respondWith(caches.match(req).then(r => r || fetch(req)));
-    return;
-  }
-  // Default
-  e.respondWith(fetch(req).catch(() => caches.match(req)));
+
+  // 그 외 정적 리소스는 브라우저 기본 정책
 });
